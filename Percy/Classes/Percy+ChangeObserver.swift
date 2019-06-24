@@ -8,8 +8,12 @@
 import CoreData
 
 extension Percy {
-    public func makeObserver<T>(filter: NSPredicate? = nil) -> ChangeObserver<T> {
-        return ChangeObserver(context: mainContext, filter: filter, in: self)
+    public func makeObserver<T, F: Filter>(filter: F? = nil) -> ChangeObserver<T> where F.Entity == T {
+        return ChangeObserver(context: mainContext, filter: filter.flatMap { AnyFilter<T>($0) }, in: self)
+    }
+    
+    public func makeObserver<T>() -> ChangeObserver<T> {
+        return ChangeObserver(context: mainContext, filter: nil, in: self)
     }
 }
 
@@ -22,12 +26,12 @@ public final class ChangeObserver<T: Persistable> {
     }
     
     private unowned let percy: Percy
-    private let filter: NSPredicate?
+    private let filter: AnyFilter<T>?
     private var identifiers = Set<T.IDType>()
     
     public var onChanges: (([Change]) -> Void)?
     
-    init(context: NSManagedObjectContext, filter: NSPredicate?, in percy: Percy) {
+    init(context: NSManagedObjectContext, filter: AnyFilter<T>?, in percy: Percy) {
         self.filter = filter
         self.percy = percy
         reloadIdentifiers()
@@ -38,7 +42,7 @@ public final class ChangeObserver<T: Persistable> {
     }
     
     public func reloadIdentifiers() {
-        self.identifiers = Set(percy.getIdentifiers(for: T.self, predicate: filter, sortDescriptors: nil, fetchLimit: nil))
+        self.identifiers = Set(percy.getIdentifiers(for: T.self, filter: filter))
     }
     
     @objc private func managedObjectContextObjectsDidChange(notification: Notification) {
@@ -89,7 +93,7 @@ public final class ChangeObserver<T: Persistable> {
     private func handleUpdate(_ entity: T, object: NSManagedObject, changeHandler: (Change) -> Void) {
         if let filter = self.filter {
             let currentObjectExists = identifiers.contains(entity.id)
-            let newObjectExists = filter.evaluate(with: object)
+            let newObjectExists = filter.filter(entity, object: object)
             switch (currentObjectExists, newObjectExists) {
             case (true, true):
                 changeHandler(.updated(entity))
@@ -110,7 +114,7 @@ public final class ChangeObserver<T: Persistable> {
     
     private func handleInsert(_ entity: T, object: NSManagedObject, changeHandler: (Change) -> Void){
         if let filter = self.filter {
-            if filter.evaluate(with: object) {
+            if filter.filter(entity, object: object) {
                 identifiers.insert(entity.id)
                 changeHandler(.inserted(entity))
             }

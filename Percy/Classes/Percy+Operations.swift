@@ -153,6 +153,28 @@ extension Percy {
 
 extension Percy {
     
+    func getEntities<Model: Persistable, F: Filter>(filter: F?) -> [Model] where F.Entity == Model {
+        let request = fetchRequest(for: Model.self, predicate: nil, sortDescriptors: nil, fetchLimit: nil)
+        return performSync { c in try c.fetch(request).compactMap {
+                let entity = try Model(object: $0, in: OperationContext(context: c, in: self))
+                guard let filter = filter else { return entity }
+                if filter.filter(entity, object: $0) { return entity }
+                return nil
+            }
+        } ?? []
+    }
+    
+    func getIdentifiers<Model: Persistable, F: Filter>(for type: Model.Type, filter: F?) -> [Model.IDType] where F.Entity == Model {
+        let request = fetchRequest(for: Model.self)
+        return performSync { c in try c.fetch(request).compactMap {
+                let entity = try Model(object: $0, in: OperationContext(context: c, in: self))
+                guard let filter = filter else { return entity.id }
+                if filter.filter(entity, object: $0) { return entity.id }
+                return nil
+            }
+        } ?? []
+    }
+    
     func first<Model: Persistable>(predicate: NSPredicate? = nil, sortDescriptors: [NSSortDescriptor]? = nil, in context: NSManagedObjectContext) -> Model? {
         return firstObject(of: Model.self, context: context, predicate: predicate, sortDescriptors: sortDescriptors)
             .flatMap { try? Model(object: $0, in: OperationContext(context: context, in: self)) }

@@ -9,15 +9,18 @@ import Foundation
 import CoreData
 
 extension Percy {
-    public func makeLiveList<T>(predicate: NSPredicate? = nil, sorting: LiveList<T>.Sorting? = nil, filter: LiveList<T>.EntityFilter? = nil) -> LiveList<T> {
-        return LiveList(context: mainContext, predicate: predicate, filter: filter, sorting: sorting, in: self)
+    public func makeLiveList<T, F: Filter>(filter: F? = nil, sorting: LiveList<T>.Sorting? = nil) -> LiveList<T> where F.Entity == T {
+        return LiveList(context: mainContext, filter: filter.flatMap { AnyFilter<T>($0) }, sorting: sorting, in: self)
+    }
+    
+    public func makeLiveList<T>(sorting: LiveList<T>.Sorting? = nil) -> LiveList<T> {
+        return LiveList(context: mainContext, filter: nil, sorting: sorting, in: self)
     }
 }
 
 public final class LiveList<T: Persistable> {
     
     public typealias Sorting = (T, T) -> Bool
-    public typealias EntityFilter = (T) -> Bool
     
     public enum Change {
         case deleted(T, index: Int)
@@ -26,9 +29,9 @@ public final class LiveList<T: Persistable> {
     }
     
     private unowned let percy: Percy
-    private let predicate: NSPredicate?
-    private let filter: EntityFilter?
+    private let filter: AnyFilter<T>?
     private let sorting: Sorting?
+    private let context: NSManagedObjectContext
     
     public private(set) var items = [T]()
     
@@ -36,8 +39,8 @@ public final class LiveList<T: Persistable> {
     public var onChange: ((Change) -> Void)?
     public var onFinish: (() -> Void)?
     
-    init(context: NSManagedObjectContext, predicate: NSPredicate?, filter: EntityFilter?, sorting: Sorting?, in percy: Percy) {
-        self.predicate = predicate
+    init(context: NSManagedObjectContext, filter: AnyFilter<T>?, sorting: Sorting?, in percy: Percy) {
+        self.context = context
         self.filter = filter
         self.sorting = sorting
         self.percy = percy
@@ -49,9 +52,8 @@ public final class LiveList<T: Persistable> {
     }
     
     public func reloadData() {
-        let items: [T] = percy.getEntities(predicate: predicate, sortDescriptors: nil, fetchLimit: nil)
-        let filteredItems = filter.flatMap { items.filter($0) } ?? items
-        self.items = sorting.flatMap { filteredItems.sorted(by: $0) } ?? filteredItems
+        let items: [T] = percy.getEntities(filter: filter)
+        self.items = sorting.flatMap { items.sorted(by: $0) } ?? items
     }
     
     @objc private func managedObjectContextObjectsDidChange(notification: Notification) {
@@ -107,41 +109,26 @@ public final class LiveList<T: Persistable> {
     }
 
     private func handleUpdate(_ entity: T, object: NSManagedObject, changeHandler: (Change) -> Void) {
-        let currentObjectIndex = items.firstIndex(where: { $0.id == entity.id })
-        
-        if let isNewObjectConformsFilter = self.tryEvaluateFilters(entity: entity, object: object) {
-            handleUpdateForEntity(entity, at: currentObjectIndex, isNewObjectConformsFilter: isNewObjectConformsFilter, changeHandler: changeHandler)
-        } else {
-            guard let index = currentObjectIndex else { return }
-            handleUpdateAtIndex(entity, index: index, changeHandler: changeHandler)
+        if let filter = self.filter {
+            let currentObjectIndex = items.firstIndex { $0.id == entity.id }
+            let isNewObjectConformsFilter = filter.filter(entity, object: object)
+            switch (currentObjectIndex, isNewObjectConformsFilter) {
+            case (let index?, true):
+                handleUpdateAtIndex(entity, index: index, changeHandler: changeHandler)
+            case (let index?, false):
+                let deletedEntity = items[index]
+                items.remove(at: index)
+                changeHandler(.deleted(deletedEntity, index: index))
+            case (nil, true):
+                insertEntity(entity, changeHandler: changeHandler)
+            case (nil, false):
+                break
+            }
         }
-    }
-    
-    private func tryEvaluateFilters(entity: T, object: NSManagedObject) -> Bool? {
-        switch (self.predicate, self.filter) {
-        case (let predicate?, let filter?):
-            return predicate.evaluate(with: object) && filter(entity)
-        case (let predicate?, nil):
-            return predicate.evaluate(with: object)
-        case (nil, let filter?):
-            return filter(entity)
-        case (nil, nil):
-            return nil
-        }
-    }
-    
-    private func handleUpdateForEntity(_ entity: T, at currentObjectIndex: Int?, isNewObjectConformsFilter: Bool, changeHandler: (Change) -> Void) {
-        switch (currentObjectIndex, isNewObjectConformsFilter) {
-        case (let index?, true):
-            handleUpdateAtIndex(entity, index: index, changeHandler: changeHandler)
-        case (let index?, false):
-            let deletedEntity = items[index]
-            items.remove(at: index)
-            changeHandler(.deleted(deletedEntity, index: index))
-        case (nil, true):
-            insertEntity(entity, changeHandler: changeHandler)
-        case (nil, false):
-            return
+        else {
+            if let index = self.items.firstIndex(where: { $0.id == entity.id }) {
+                handleUpdateAtIndex(entity, index: index, changeHandler: changeHandler)
+            }
         }
     }
     
@@ -161,8 +148,8 @@ public final class LiveList<T: Persistable> {
     }
 
     private func handleInsert(_ entity: T, object: NSManagedObject, changeHandler: (Change) -> Void){
-        if let isNewObjectConformsFilters = tryEvaluateFilters(entity: entity, object: object) {
-            if isNewObjectConformsFilters {
+        if let filter = self.filter {
+            if filter.filter(entity, object: object) {
                 insertEntity(entity, changeHandler: changeHandler)
             }
         } else {

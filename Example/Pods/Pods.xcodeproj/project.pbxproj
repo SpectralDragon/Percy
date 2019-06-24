@@ -26,6 +26,7 @@
 		C90C7E01228E8748007F5843 /* Percy+RemoteStoreMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90C7E00228E8748007F5843 /* Percy+RemoteStoreMerger.swift */; };
 		C99D84A222004139000E7D46 /* Percy+ChangeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99D84A122004139000E7D46 /* Percy+ChangeObserver.swift */; };
 		C99D84A4220041AB000E7D46 /* PercyChangeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99D84A3220041AB000E7D46 /* PercyChangeType.swift */; };
+		CDBAFFA022C0F04A00243795 /* PercyFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDBAFF9F22C0F04A00243795 /* PercyFilter.swift */; };
 		D95C47175583CF1FEEC89E1BCB6DFA01 /* Percy-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 1AB1298CB0316B25E40C1A8531BDCEDD /* Percy-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		DF926A25E117028ADF824A62D6A4BCF9 /* Percy+Operations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C30BEBC68011482183ECFB81428BA2 /* Percy+Operations.swift */; };
 		F49632957684F08BA9EB514E7DDB03CD /* Percy+LiveList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0182DDFA074841D171DDE39E381D3B40 /* Percy+LiveList.swift */; };
@@ -76,6 +77,7 @@
 		C90C7E00228E8748007F5843 /* Percy+RemoteStoreMerger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Percy+RemoteStoreMerger.swift"; path = "Percy/Classes/Percy+RemoteStoreMerger.swift"; sourceTree = "<group>"; };
 		C99D84A122004139000E7D46 /* Percy+ChangeObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Percy+ChangeObserver.swift"; path = "Percy/Classes/Percy+ChangeObserver.swift"; sourceTree = "<group>"; };
 		C99D84A3220041AB000E7D46 /* PercyChangeType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PercyChangeType.swift; path = Percy/Classes/PercyChangeType.swift; sourceTree = "<group>"; };
+		CDBAFF9F22C0F04A00243795 /* PercyFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PercyFilter.swift; path = Percy/Classes/PercyFilter.swift; sourceTree = "<group>"; };
 		D2D37E4BA592CD0ABDB1A622FF08C649 /* Pods-Percy_Example-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Percy_Example-acknowledgements.plist"; sourceTree = "<group>"; };
 		DC7F9FBACD101083DE92526556A3F446 /* Percy+Stores.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = "Percy+Stores.swift"; path = "Percy/Classes/Percy+Stores.swift"; sourceTree = "<group>"; };
 		DE451F73864AD4B2273FC0239DDCFEA1 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 				B52D454920EE06C100ED4C51 /* PercyResult.swift */,
 				36A02CD6F5DB09559FCD2625049A1B21 /* PercyError.swift */,
 				B5E5DD7920A0DF1000342EBD /* Extensions.swift */,
+				CDBAFF9F22C0F04A00243795 /* PercyFilter.swift */,
 				21541132EECD38EE4FBA7F2F3EEB2556 /* Pod */,
 				11D4C4708062266B482E78810BC9070D /* Support Files */,
 			);
@@ -319,6 +322,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C90C7E01228E8748007F5843 /* Percy+RemoteStoreMerger.swift in Sources */,
+				CDBAFFA022C0F04A00243795 /* PercyFilter.swift in Sources */,
 				B52D454A20EE06C100ED4C51 /* PercyResult.swift in Sources */,
 				B5E5DD7F20A6ADC600342EBD /* Percy+Transaction.swift in Sources */,
 				79DC909C7BEDA77DAE336332A2FE64CB /* Percy+Context.swift in Sources */,
