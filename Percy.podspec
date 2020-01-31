@@ -18,6 +18,7 @@ Pod::Spec.new do |s|
   s.social_media_url = 'https://instagram.com/swift_codes'
 
   s.ios.deployment_target = '9.0'
+  s.macos.deployment_target = '10.13'
   s.source_files = 'Percy/Classes/**/*'
   s.frameworks = 'CoreData'
   
